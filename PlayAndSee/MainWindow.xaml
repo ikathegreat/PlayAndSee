@@ -1,0 +1,203 @@
+﻿<Window x:Class="PlayAndSee.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:PlayAndSee"
+        mc:Ignorable="d"
+        Title="Play and See" Height="550" Width="1000" WindowStartupLocation="CenterScreen" Loaded="Window_Loaded">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Redo" Executed="RandomizeCommand_Executed"/>
+        <CommandBinding Command="ApplicationCommands.SelectAll" Executed="ChangeViewCommand_Executed"/>
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F5" Command="ApplicationCommands.Redo"/>
+        <KeyBinding Key="F11" Command="ApplicationCommands.SelectAll"/>
+    </Window.InputBindings>
+    <Grid  >
+        <Grid.Resources>
+            <Style TargetType="Button" x:Key="TileButton" >
+                <Setter Property="Foreground" Value="{x:Null}"/>
+                <Setter Property="BorderBrush" Value="LightGray"/>
+                <Setter Property="Background" Value="White"/>
+            </Style>
+            <Style TargetType="TextBlock" x:Key="TileTextBlock" >
+                <Setter Property="Foreground" Value="Black"/>
+                <Setter Property="FontSize" Value="48"/>
+                <Setter Property="FontWeight" Value="Bold"/>
+            </Style>
+            <Style TargetType="Image" x:Key="TileImage" >
+                <Setter Property="Stretch" Value="Uniform"/>
+            </Style>
+        </Grid.Resources>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Menu DockPanel.Dock="Top" Grid.Row="0" Background="White">
+            <MenuItem Header="_File">
+                <MenuItem x:Name="ChangeViewMenuItem" Header="Go to Fullscreen View" Command="ApplicationCommands.SelectAll" InputGestureText="F11" />
+                <MenuItem x:Name="MenuItemRandomize" Header="Randomize" Command="ApplicationCommands.Redo" InputGestureText="F5"/>
+                <Separator />
+                <MenuItem x:Name="SoundMenuItem" Header="Sound" IsCheckable="True" IsChecked="True" Click="SoundMenuItem_Click"/>
+                <Separator />
+                <MenuItem Header="_Exit" Click="MenuItem_Click" InputGestureText="Alt+F4" />
+            </MenuItem>
+            <MenuItem Header="Play Mode" >
+                <MenuItem x:Name="AnimalModeMenuItem" Header="Animals" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" IsChecked="True" Click="SetNewMode_Click"/>
+                <MenuItem x:Name="NumbersModeMenuItem" Header="Numbers" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
+                <MenuItem x:Name="ColorsModeMenuItem" Header="Colors" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
+                <MenuItem x:Name="FoodModeMenuItem" Header="Food" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
+                <MenuItem x:Name="ThingsModeMenuItem" Header="Things" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
+                <MenuItem x:Name="EmotionsModeMenuItem" Header="Emotions" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
+            </MenuItem>
+        </Menu>
+        <Grid Grid.Row="1" >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+            </Grid.RowDefinitions>
+            <Button x:Name="ButtonTopLeft" Grid.Row="0" Grid.Column="0" Style="{StaticResource TileButton}" Click="ButtonTopLeft_Click">
+                <TabControl x:Name="TabControlTopLeft" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageTopLeft" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockTopLeft" Style="{StaticResource TileTextBlock}" />
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonTopMiddle" Grid.Row="0" Grid.Column="1" Style="{StaticResource TileButton}" Click="ButtonTopMiddle_Click">
+                <TabControl x:Name="TabControlTopMiddle" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageTopMiddle" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockTopMiddle" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonTopRight" Grid.Row="0" Grid.Column="2" Style="{StaticResource TileButton}" Click="ButtonTopRight_Click">
+                <TabControl x:Name="TabControlTopRight" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageTopRight" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockTopRight" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonMiddleLeft" Grid.Row="1" Grid.Column="0" Style="{StaticResource TileButton}" Click="ButtonMiddleLeft_Click">
+                <TabControl x:Name="TabControlMiddleLeft" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageMiddleLeft" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockMiddleLeft" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonMiddleMiddle" Grid.Row="1" Grid.Column="1" Style="{StaticResource TileButton}" Click="ButtonMiddleMiddle_Click">
+                <TabControl x:Name="TabControlMiddleMiddle" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageMiddleMiddle" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockMiddleMiddle" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonMiddleRight" Grid.Row="1" Grid.Column="2" Style="{StaticResource TileButton}" Click="ButtonMiddleRight_Click">
+                <TabControl x:Name="TabControlMiddleRight" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                    <Style TargetType="{x:Type TabItem}">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </Style>
+                </TabControl.ItemContainerStyle>
+                <TabItem>
+                    <Image x:Name="ImageMiddleRight" Style="{StaticResource TileImage}"/>
+                </TabItem>
+                <TabItem>
+                    <TextBlock x:Name="TextBlockMiddleRight" Style="{StaticResource TileTextBlock}"/>
+                </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonBottomLeft" Grid.Row="2" Grid.Column="0" Style="{StaticResource TileButton}" Click="ButtonBottomLeft_Click">
+                <TabControl x:Name="TabControlBottomLeft" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageBottomLeft" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockBottomLeft" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonBottomMiddle" Grid.Row="2" Grid.Column="1" Style="{StaticResource TileButton}" Click="ButtonBottomMiddle_Click">
+                <TabControl x:Name="TabControlBottomMiddle" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageBottomMiddle" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockBottomMiddle" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+            <Button x:Name="ButtonBottomRight" Grid.Row="2" Grid.Column="2" Style="{StaticResource TileButton}" Click="ButtonBottomRight_Click">
+                <TabControl x:Name="TabControlBottomRight" BorderBrush="{x:Null}">
+                    <TabControl.ItemContainerStyle>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageBottomRight" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockBottomRight" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
+                </TabControl>
+            </Button>
+        </Grid>
+    </Grid>
+</Window>
