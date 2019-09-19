@@ -43,6 +43,8 @@
                 <Separator />
                 <MenuItem x:Name="SoundMenuItem" Header="Sound" IsCheckable="True" IsChecked="True" Click="SoundMenuItem_Click"/>
                 <Separator />
+                <MenuItem x:Name="OpenImageFolderMenuItem" Header="Open Image Folder..." Click="OpenImageFolderMenuItem_Click"/>
+                <Separator />
                 <MenuItem Header="_Exit" Click="MenuItem_Click" InputGestureText="Alt+F4" />
             </MenuItem>
             <MenuItem x:Name="MenuItemCategory" Header="Category"/>
@@ -51,8 +53,8 @@
                 <MenuItem x:Name="MenuItemGuessPlayMode" Header="Guess" IsCheckable="True" local:MenuItemExtensions.GroupName="playMode" Click="PlayModeMenuItemClick"/>
             </MenuItem>
         </Menu>
-        <Grid x:Name="GridGuess" Grid.Row="1" Height="75">
-            <Label x:Name="LabelGuess" Content="Name" HorizontalAlignment="Center" FontSize="48" VerticalAlignment="Center" FontWeight="Bold"/>
+        <Grid x:Name="GridGuess" Grid.Row="1" Height="85">
+            <Label x:Name="LabelGuess" Content="Name" HorizontalAlignment="Center" FontSize="48" VerticalAlignment="Center" FontWeight="Bold" MouseDown="LabelGuess_MouseDown" />
         </Grid>
         <Grid Grid.Row="2" >
             <Grid.ColumnDefinitions>

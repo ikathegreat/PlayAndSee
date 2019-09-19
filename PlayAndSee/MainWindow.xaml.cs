@@ -1,21 +1,15 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.Globalization;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Media;
-using System.Net;
-using System.Reflection;
-using System.Resources;
-using System.Speech.AudioFormat;
 using System.Speech.Synthesis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using Image = System.Windows.Controls.Image;
 
 namespace PlayAndSee
@@ -39,7 +33,12 @@ namespace PlayAndSee
         }
 
         private bool allowSound = true;
+        private TabControl guessCorrectTabControl;
+        private int guessCorrectFlashCount = 0;
+        private DispatcherTimer timer;
+
         private readonly SpeechSynthesizer synthesizer;
+        private const string imageDirectory = @"C:\Users\paul.ikeda\Source\Repos\PlayAndSee\Install";
 
         private readonly List<TileData> tileDataList = new List<TileData>();
 
@@ -61,8 +60,8 @@ namespace PlayAndSee
                 Rate = 2
             };
             synthesizer.SelectVoice("Microsoft Zira Desktop");
+            synthesizer.SpeakCompleted += Synthesizer_SpeakCompleted;
 
-            const string imageDirectory = @"C:\Users\paul.ikeda\Source\Repos\PlayAndSee\Install";
             var imageDirectories = Directory.GetDirectories(imageDirectory);
             foreach (var directory in imageDirectories)
             {
@@ -101,6 +100,11 @@ namespace PlayAndSee
             GridGuess.Visibility = Visibility.Collapsed;
 
 
+        }
+
+        private void Synthesizer_SpeakCompleted(object sender, SpeakCompletedEventArgs e)
+        {
+            LabelGuess.Foreground = System.Windows.Media.Brushes.Black;
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
@@ -147,9 +151,22 @@ namespace PlayAndSee
             {
                 if (textBlock.Text == LabelGuess.Content.ToString())
                 {
+                    //Correct 
+
                     if (SoundMenuItem.IsChecked)
                         SystemSounds.Hand.Play();
-                    RandomizeTiles();
+
+                    guessCorrectFlashCount = 0;
+                    timer = new DispatcherTimer
+                    {
+                        Interval = TimeSpan.FromSeconds(0.1)
+                    };
+                    timer.Tick += timer_Tick;
+                    timer.Start();
+
+                    guessCorrectTabControl = tabControl;
+
+                    //RandomizeTiles();
                     return;
                 }
 
@@ -176,6 +193,18 @@ namespace PlayAndSee
             }
 
             tabControl.SelectedIndex = Math.Abs(tabControl.SelectedIndex - 1);
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            if (guessCorrectFlashCount >= 6)
+            {
+                timer.Stop();
+                RandomizeTiles();
+                return;
+            }
+            guessCorrectTabControl.SelectedIndex = Math.Abs(guessCorrectTabControl.SelectedIndex - 1);
+            guessCorrectFlashCount++;
         }
 
         private void ButtonTopLeft_Click(object sender, RoutedEventArgs e)
@@ -270,12 +299,26 @@ namespace PlayAndSee
 
                     var tileText = tilesForModeList[index].DisplayText;
                     if (textBlock != null)
+                    {
                         textBlock.Text = tileText;
 
-                    if (index == guessIndex)
-                    {
-                        LabelGuess.Content = tileText;
+                        if (MenuItemGuessPlayMode.IsChecked)
+                        {
+
+                            if (index == guessIndex)
+                            {
+                                LabelGuess.Content = tileText;
+                            }
+                            textBlock.Foreground = index == guessIndex
+                                ? System.Windows.Media.Brushes.GreenYellow : System.Windows.Media.Brushes.Red;
+                        }
+                        else
+                        {
+                            textBlock.Foreground = System.Windows.Media.Brushes.Black;
+
+                        }
                     }
+
 
                     index++;
                 }
@@ -288,11 +331,11 @@ namespace PlayAndSee
                 }
             }
 
-            if (MenuItemGuessPlayMode.IsChecked)
-            {
-                synthesizer.SpeakAsyncCancelAll();
-                synthesizer.SpeakAsync(LabelGuess.Content.ToString());
-            }
+            if (!MenuItemGuessPlayMode.IsChecked)
+                return;
+
+            synthesizer.SpeakAsyncCancelAll();
+            synthesizer.SpeakAsync(LabelGuess.Content.ToString());
         }
 
         private void RandomizeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
@@ -327,6 +370,18 @@ namespace PlayAndSee
         private void PlayModeMenuItemClick(object sender, RoutedEventArgs e)
         {
             RandomizeTiles();
+        }
+
+        private void LabelGuess_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            LabelGuess.Foreground = System.Windows.Media.Brushes.YellowGreen;
+            synthesizer.SpeakAsyncCancelAll();
+            synthesizer.SpeakAsync(LabelGuess.Content.ToString());
+        }
+
+        private void OpenImageFolderMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(imageDirectory);
         }
     }
 }
