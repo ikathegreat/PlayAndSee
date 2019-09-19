@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Net;
 using System.Reflection;
 using System.Resources;
@@ -41,6 +42,13 @@ namespace PlayAndSee
         private readonly SpeechSynthesizer synthesizer;
 
         private readonly List<TileData> tileDataList = new List<TileData>();
+
+        /*
+         * Guessing mode
+         * Sounds from .mp3
+         *
+         *
+         */
 
 
         public MainWindow()
@@ -82,13 +90,15 @@ namespace PlayAndSee
 
                 var menuItem = new MenuItem { Header = folderName, IsCheckable = true };
                 menuItem.Click += SetNewMode_Click;
-                MenuItemExtensions.SetGroupName(menuItem, "Mode");
-                MenuItemPlayMode.Items.Add(menuItem);
+                MenuItemExtensions.SetGroupName(menuItem, "CategoryGroup");
+                MenuItemCategory.Items.Add(menuItem);
 
             }
 
-            if (MenuItemPlayMode.Items.Count > 0)
-                ((MenuItem)MenuItemPlayMode.Items[0]).IsChecked = true;
+            if (MenuItemCategory.Items.Count > 0)
+                ((MenuItem)MenuItemCategory.Items[0]).IsChecked = true;
+
+            GridGuess.Visibility = Visibility.Collapsed;
 
 
         }
@@ -126,14 +136,28 @@ namespace PlayAndSee
             if (textBlock == null)
                 return;
 
-            tabControl.SelectedIndex = Math.Abs(tabControl.SelectedIndex - 1);
 
-            if (tabControl.SelectedIndex == 1 && !string.IsNullOrEmpty(textBlock.Text) && allowSound)
+            if (tabControl.SelectedIndex == 0 && !string.IsNullOrEmpty(textBlock.Text) && allowSound)
             {
                 synthesizer.SpeakAsyncCancelAll();
                 synthesizer.SpeakAsync(textBlock.Text);
             }
 
+            if (MenuItemGuessPlayMode.IsChecked)
+            {
+                if (textBlock.Text == LabelGuess.Content.ToString())
+                {
+                    if (SoundMenuItem.IsChecked)
+                        SystemSounds.Hand.Play();
+                    RandomizeTiles();
+                    return;
+                }
+
+                if (SoundMenuItem.IsChecked)
+                    SystemSounds.Beep.Play();
+            }
+
+            //Randomize after all tiles turned
             var doRandomize = true;
             var locationEnumList = Enum.GetValues(typeof(ButtonLocation)).Cast<ButtonLocation>().ToList();
             foreach (var checkButtonLocation in locationEnumList)
@@ -144,8 +168,14 @@ namespace PlayAndSee
                 if (checkTabControl.SelectedIndex == 0)
                     doRandomize = false;
             }
+
             if (doRandomize)
+            {
                 RandomizeTiles();
+                return;
+            }
+
+            tabControl.SelectedIndex = Math.Abs(tabControl.SelectedIndex - 1);
         }
 
         private void ButtonTopLeft_Click(object sender, RoutedEventArgs e)
@@ -194,58 +224,34 @@ namespace PlayAndSee
             ButtonClick(ButtonLocation.BottomRight);
         }
 
-        private void RandomizeTiles(string mode = "")
+        private void RandomizeTiles(string category = "")
         {
-
-
-
-            //var resourceManager = new ResourceManager(Assembly.GetExecutingAssembly().GetName().Name + ".g",
-            //    Assembly.GetExecutingAssembly());
-
-            //var resources = resourceManager.GetResourceSet(CultureInfo.CurrentUICulture, true, true);
-
-
-            //var textInfo = new CultureInfo("en-US", false).TextInfo;
-
-            //foreach (var resource in resources)
-            //{
-            //    var resourceString = (string)((DictionaryEntry)resource).Key;
-            //    if (!resourceString.ToLower().StartsWith("images"))
-            //        continue;
-            //    if (!resourceString.ToLower().EndsWith(".png"))
-            //        continue;
-
-            //    var trimmedResource = resourceString.Replace("images/", "");
-
-            //    if (!trimmedResource.ToLower().StartsWith(activePlayMode.ToString().ToLower()))
-            //        continue;
-
-            //    var trimmedResource2 = trimmedResource.Replace($"{activePlayMode.ToString().ToLower()}/", "")
-            //        .Replace(".png", "").Replace("%20", " ");
-
-            //    tileItems.Add(new Tuple<string, string>(textInfo.ToTitleCase(trimmedResource2), resourceString));
-            //}
-
-            if (string.IsNullOrEmpty(mode))
+            if (string.IsNullOrEmpty(category))
             {
-                foreach (var item in MenuItemPlayMode.Items)
+                foreach (var item in MenuItemCategory.Items)
                 {
                     if (!(item is MenuItem mi))
                         return;
                     if (!mi.IsChecked)
                         continue;
 
-                    mode = mi.Header.ToString();
+                    category = mi.Header.ToString();
                     break;
                 }
 
             }
 
-            var tilesForModeList = tileDataList.Where(x => x.ModeCategory == mode).ToList();
+            GridGuess.Visibility = MenuItemGuessPlayMode.IsChecked ? Visibility.Visible : Visibility.Collapsed;
+
+            var tilesForModeList = tileDataList.Where(x => x.ModeCategory == category).ToList();
             tilesForModeList.Shuffle();
 
             var locationEnumList = Enum.GetValues(typeof(ButtonLocation)).Cast<ButtonLocation>().ToList();
             var index = 0;
+
+            var r = new Random();
+            var guessIndex = r.Next(0, 9);
+
             foreach (var buttonLocation in locationEnumList)
             {
                 var tabControl = (TabControl)FindName($"TabControl{buttonLocation.ToString()}");
@@ -262,9 +268,14 @@ namespace PlayAndSee
                         image.Source = tilesForModeList[index].BitmapImage;
                     }
 
-
+                    var tileText = tilesForModeList[index].DisplayText;
                     if (textBlock != null)
-                        textBlock.Text = tilesForModeList[index].DisplayText;
+                        textBlock.Text = tileText;
+
+                    if (index == guessIndex)
+                    {
+                        LabelGuess.Content = tileText;
+                    }
 
                     index++;
                 }
@@ -275,6 +286,12 @@ namespace PlayAndSee
                     if (textBlock != null)
                         textBlock.Text = "";
                 }
+            }
+
+            if (MenuItemGuessPlayMode.IsChecked)
+            {
+                synthesizer.SpeakAsyncCancelAll();
+                synthesizer.SpeakAsync(LabelGuess.Content.ToString());
             }
         }
 
@@ -299,21 +316,17 @@ namespace PlayAndSee
             if (!(sender is MenuItem menuItem))
                 return;
 
-            //try
-            //{
-            //    activePlayMode = (PlayModeEnum)Enum.Parse(typeof(PlayModeEnum),
-            //        menuItem.Header.ToString());
-            //}
-            //catch (Exception ex)
-            //{
-            //    //ignored
-            //}
             RandomizeTiles(menuItem.Header.ToString());
         }
 
         private void SoundMenuItem_Click(object sender, RoutedEventArgs e)
         {
             allowSound = !allowSound;
+        }
+
+        private void PlayModeMenuItemClick(object sender, RoutedEventArgs e)
+        {
+            RandomizeTiles();
         }
     }
 }

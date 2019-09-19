@@ -33,6 +33,7 @@
         </Grid.Resources>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition/>
         </Grid.RowDefinitions>
         <Menu DockPanel.Dock="Top" Grid.Row="0" Background="White">
@@ -44,17 +45,16 @@
                 <Separator />
                 <MenuItem Header="_Exit" Click="MenuItem_Click" InputGestureText="Alt+F4" />
             </MenuItem>
+            <MenuItem x:Name="MenuItemCategory" Header="Category"/>
             <MenuItem x:Name="MenuItemPlayMode" Header="Play Mode" >
-                <!--<MenuItem x:Name="AnimalModeMenuItem" Header="Animals" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" IsChecked="True" Click="SetNewMode_Click"/>-->
-                <!--<MenuItem x:Name="NumbersModeMenuItem" Header="Numbers" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
-                <MenuItem x:Name="ColorsModeMenuItem" Header="Colors" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
-                <MenuItem x:Name="FoodModeMenuItem" Header="Food" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
-                <MenuItem x:Name="ThingsModeMenuItem" Header="Things" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>
-                <MenuItem x:Name="EmotionsModeMenuItem" Header="Emotions" local:MenuItemExtensions.GroupName="ModeGroup" IsCheckable="True" Click="SetNewMode_Click"/>-->
-
+                <MenuItem Header="Explore" IsCheckable="True" IsChecked="True" local:MenuItemExtensions.GroupName="playMode" Click="PlayModeMenuItemClick"/>
+                <MenuItem x:Name="MenuItemGuessPlayMode" Header="Guess" IsCheckable="True" local:MenuItemExtensions.GroupName="playMode" Click="PlayModeMenuItemClick"/>
             </MenuItem>
         </Menu>
-        <Grid Grid.Row="1" >
+        <Grid x:Name="GridGuess" Grid.Row="1" Height="75">
+            <Label x:Name="LabelGuess" Content="Name" HorizontalAlignment="Center" FontSize="48" VerticalAlignment="Center" FontWeight="Bold"/>
+        </Grid>
+        <Grid Grid.Row="2" >
             <Grid.ColumnDefinitions>
                 <ColumnDefinition/>
                 <ColumnDefinition/>
@@ -143,16 +143,16 @@
             <Button x:Name="ButtonMiddleRight" Grid.Row="1" Grid.Column="2" Style="{StaticResource TileButton}" Click="ButtonMiddleRight_Click">
                 <TabControl x:Name="TabControlMiddleRight" BorderBrush="{x:Null}">
                     <TabControl.ItemContainerStyle>
-                    <Style TargetType="{x:Type TabItem}">
-                        <Setter Property="Visibility" Value="Collapsed"/>
-                    </Style>
-                </TabControl.ItemContainerStyle>
-                <TabItem>
-                    <Image x:Name="ImageMiddleRight" Style="{StaticResource TileImage}"/>
-                </TabItem>
-                <TabItem>
-                    <TextBlock x:Name="TextBlockMiddleRight" Style="{StaticResource TileTextBlock}"/>
-                </TabItem>
+                        <Style TargetType="{x:Type TabItem}">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </Style>
+                    </TabControl.ItemContainerStyle>
+                    <TabItem>
+                        <Image x:Name="ImageMiddleRight" Style="{StaticResource TileImage}"/>
+                    </TabItem>
+                    <TabItem>
+                        <TextBlock x:Name="TextBlockMiddleRight" Style="{StaticResource TileTextBlock}"/>
+                    </TabItem>
                 </TabControl>
             </Button>
             <Button x:Name="ButtonBottomLeft" Grid.Row="2" Grid.Column="0" Style="{StaticResource TileButton}" Click="ButtonBottomLeft_Click">
