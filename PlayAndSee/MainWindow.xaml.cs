@@ -2,22 +2,20 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Resources;
+using System.Speech.AudioFormat;
 using System.Speech.Synthesis;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+using Image = System.Windows.Controls.Image;
 
 namespace PlayAndSee
 {
@@ -26,7 +24,7 @@ namespace PlayAndSee
     /// </summary>
     public partial class MainWindow : Window
     {
-        enum ButtonLocation
+        private enum ButtonLocation
         {
             TopLeft,
             TopMiddle,
@@ -39,27 +37,60 @@ namespace PlayAndSee
             BottomRight
         }
 
-        enum PlayModeEnum
-        {
-            Animals,
-            Numbers,
-            Colors,
-            Food,
-            Things,
-            Emotions,
-        }
-
-        private PlayModeEnum activePlayMode = PlayModeEnum.Animals;
         private bool allowSound = true;
         private readonly SpeechSynthesizer synthesizer;
+
+        private readonly List<TileData> tileDataList = new List<TileData>();
+
+
         public MainWindow()
         {
             InitializeComponent();
+
             synthesizer = new SpeechSynthesizer
             {
                 Volume = 100,
-                Rate = -2
+                Rate = 2
             };
+            synthesizer.SelectVoice("Microsoft Zira Desktop");
+
+            const string imageDirectory = @"C:\Users\paul.ikeda\Source\Repos\PlayAndSee\Install";
+            var imageDirectories = Directory.GetDirectories(imageDirectory);
+            foreach (var directory in imageDirectories)
+            {
+                var folderName = Path.GetFileName(directory);
+
+                var files = Directory.GetFiles(directory);
+
+                var tempTileDataList = new List<TileData>();
+
+                foreach (var file in files)
+                {
+                    var tileItem = new TileData
+                    {
+                        DisplayText = Path.GetFileNameWithoutExtension(file),
+                        ModeCategory = folderName,
+                        BitmapImage = new BitmapImage(new Uri(file))
+                    };
+                    tempTileDataList.Add(tileItem);
+                }
+
+                if (tempTileDataList.Count < 9)
+                    continue;
+
+                tileDataList.AddRange(tempTileDataList);
+
+                var menuItem = new MenuItem { Header = folderName, IsCheckable = true };
+                menuItem.Click += SetNewMode_Click;
+                MenuItemExtensions.SetGroupName(menuItem, "Mode");
+                MenuItemPlayMode.Items.Add(menuItem);
+
+            }
+
+            if (MenuItemPlayMode.Items.Count > 0)
+                ((MenuItem)MenuItemPlayMode.Items[0]).IsChecked = true;
+
+
         }
 
         private void MenuItem_Click(object sender, RoutedEventArgs e)
@@ -98,7 +129,23 @@ namespace PlayAndSee
             tabControl.SelectedIndex = Math.Abs(tabControl.SelectedIndex - 1);
 
             if (tabControl.SelectedIndex == 1 && !string.IsNullOrEmpty(textBlock.Text) && allowSound)
+            {
+                synthesizer.SpeakAsyncCancelAll();
                 synthesizer.SpeakAsync(textBlock.Text);
+            }
+
+            var doRandomize = true;
+            var locationEnumList = Enum.GetValues(typeof(ButtonLocation)).Cast<ButtonLocation>().ToList();
+            foreach (var checkButtonLocation in locationEnumList)
+            {
+                var checkTabControl = (TabControl)FindName($"TabControl{checkButtonLocation.ToString()}");
+                if (checkTabControl == null)
+                    continue;
+                if (checkTabControl.SelectedIndex == 0)
+                    doRandomize = false;
+            }
+            if (doRandomize)
+                RandomizeTiles();
         }
 
         private void ButtonTopLeft_Click(object sender, RoutedEventArgs e)
@@ -147,58 +194,77 @@ namespace PlayAndSee
             ButtonClick(ButtonLocation.BottomRight);
         }
 
-        private void RandomizeTiles()
+        private void RandomizeTiles(string mode = "")
         {
-            var tileItems = new List<Tuple<string, string>>();
-
-            var resourceManager = new ResourceManager(Assembly.GetExecutingAssembly().GetName().Name + ".g",
-                Assembly.GetExecutingAssembly());
-
-            var resources = resourceManager.GetResourceSet(CultureInfo.CurrentUICulture, true, true);
 
 
-            var textInfo = new CultureInfo("en-US", false).TextInfo;
 
-            foreach (var resource in resources)
+            //var resourceManager = new ResourceManager(Assembly.GetExecutingAssembly().GetName().Name + ".g",
+            //    Assembly.GetExecutingAssembly());
+
+            //var resources = resourceManager.GetResourceSet(CultureInfo.CurrentUICulture, true, true);
+
+
+            //var textInfo = new CultureInfo("en-US", false).TextInfo;
+
+            //foreach (var resource in resources)
+            //{
+            //    var resourceString = (string)((DictionaryEntry)resource).Key;
+            //    if (!resourceString.ToLower().StartsWith("images"))
+            //        continue;
+            //    if (!resourceString.ToLower().EndsWith(".png"))
+            //        continue;
+
+            //    var trimmedResource = resourceString.Replace("images/", "");
+
+            //    if (!trimmedResource.ToLower().StartsWith(activePlayMode.ToString().ToLower()))
+            //        continue;
+
+            //    var trimmedResource2 = trimmedResource.Replace($"{activePlayMode.ToString().ToLower()}/", "")
+            //        .Replace(".png", "").Replace("%20", " ");
+
+            //    tileItems.Add(new Tuple<string, string>(textInfo.ToTitleCase(trimmedResource2), resourceString));
+            //}
+
+            if (string.IsNullOrEmpty(mode))
             {
-                var resourceString = (string)((DictionaryEntry)resource).Key;
-                if (!resourceString.ToLower().StartsWith("images"))
-                    continue;
-                if (!resourceString.ToLower().EndsWith(".png"))
-                    continue;
+                foreach (var item in MenuItemPlayMode.Items)
+                {
+                    if (!(item is MenuItem mi))
+                        return;
+                    if (!mi.IsChecked)
+                        continue;
 
-                var trimmedResource = resourceString.Replace("images/", "");
+                    mode = mi.Header.ToString();
+                    break;
+                }
 
-                if (!trimmedResource.ToLower().StartsWith(activePlayMode.ToString().ToLower()))
-                    continue;
-
-                var trimmedResource2 = trimmedResource.Replace($"{activePlayMode.ToString().ToLower()}/", "")
-                    .Replace(".png", "").Replace("%20", " ");
-
-                tileItems.Add(new Tuple<string, string>(textInfo.ToTitleCase(trimmedResource2), resourceString));
             }
 
-            tileItems.Shuffle();
+            var tilesForModeList = tileDataList.Where(x => x.ModeCategory == mode).ToList();
+            tilesForModeList.Shuffle();
 
-            var randomLocationsEnumList = Enum.GetValues(typeof(ButtonLocation)).Cast<ButtonLocation>().ToList();
+            var locationEnumList = Enum.GetValues(typeof(ButtonLocation)).Cast<ButtonLocation>().ToList();
             var index = 0;
-            foreach (var buttonLocation in randomLocationsEnumList)
+            foreach (var buttonLocation in locationEnumList)
             {
                 var tabControl = (TabControl)FindName($"TabControl{buttonLocation.ToString()}");
                 if (tabControl != null)
                     tabControl.SelectedIndex = 0;
 
-                var image = (System.Windows.Controls.Image)FindName($"Image{buttonLocation.ToString()}");
+                var image = (Image)FindName($"Image{buttonLocation.ToString()}");
                 var textBlock = (TextBlock)FindName($"TextBlock{buttonLocation.ToString()}");
 
-                if (tileItems.Count != 0)
+                if (tilesForModeList.Count != 0)
                 {
                     if (image != null)
-                        image.Source = new BitmapImage(new Uri($@"pack://application:,,,/{tileItems[index].Item2}", UriKind.Absolute));
+                    {
+                        image.Source = tilesForModeList[index].BitmapImage;
+                    }
 
 
                     if (textBlock != null)
-                        textBlock.Text = tileItems[index].Item1;
+                        textBlock.Text = tilesForModeList[index].DisplayText;
 
                     index++;
                 }
@@ -233,15 +299,16 @@ namespace PlayAndSee
             if (!(sender is MenuItem menuItem))
                 return;
 
-            try
-            {
-                activePlayMode = (PlayModeEnum)Enum.Parse(typeof(PlayModeEnum),
-                    menuItem.Header.ToString());
-            }
-            catch (Exception ex)
-            {
-                //ignored
-            }
+            //try
+            //{
+            //    activePlayMode = (PlayModeEnum)Enum.Parse(typeof(PlayModeEnum),
+            //        menuItem.Header.ToString());
+            //}
+            //catch (Exception ex)
+            //{
+            //    //ignored
+            //}
+            RandomizeTiles(menuItem.Header.ToString());
         }
 
         private void SoundMenuItem_Click(object sender, RoutedEventArgs e)
