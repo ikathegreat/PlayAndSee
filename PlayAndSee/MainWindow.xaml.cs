@@ -166,7 +166,6 @@ namespace PlayAndSee
 
                     guessCorrectTabControl = tabControl;
 
-                    //RandomizeTiles();
                     return;
                 }
 
